@@ -3,21 +3,25 @@
 import { useState } from "react";
 
 type GeneratedRow = {
-  asset_class: string;
-  failure_family: string;
-  effect: string;
-  causes: string[];
-  detection: string[];
-  actions: string[];
-  sev_pre: number;
-  occ_pre: number;
-  det_pre: number;
-  rpn_pre: number;
+  component: string | null;
+  failure_mode: string | null;
+  effects: string | null;
+  cause: string | null;
+  current_design: string | null;
+  recommended_actions: string | null;
+  sev_pre: number | null;
+  occ_pre: number | null;
+  det_pre: number | null;
+  rpn_pre: number | null;
+  sev_post: number | null;
+  occ_post: number | null;
+  det_post: number | null;
+  rpn_post: number | null;
 };
 
 export default function FmeaGeneratorPage() {
-  const [assetClass, setAssetClass] = useState("");
-  const [failureFamily, setFailureFamily] = useState("");
+  const [component, setComponent] = useState("");
+  const [failureMode, setFailureMode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GeneratedRow | null>(null);
@@ -27,8 +31,8 @@ export default function FmeaGeneratorPage() {
     setError(null);
     setResult(null);
 
-    if (!assetClass || !failureFamily) {
-      setError("Please select both asset class and failure family.");
+    if (!component || !failureMode) {
+      setError("Please select both component and failure mode.");
       return;
     }
 
@@ -38,8 +42,8 @@ export default function FmeaGeneratorPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          asset_class: assetClass,
-          failure_family: failureFamily,
+          component,
+          failure_mode: failureMode,
         }),
       });
 
@@ -79,9 +83,10 @@ export default function FmeaGeneratorPage() {
               <span className="text-sky-400 text-base">Stage 1</span>
             </h1>
             <p className="text-sm text-slate-400 mt-1">
-              Library-only generator: look up a template row in{" "}
-              <code className="text-sky-300">fmea_library</code>, compute RPN
-              deterministically, and display the result.
+              Library-only generator using rows from{" "}
+              <code className="text-sky-300">fmea_dummy</code>: look up a stored
+              scenario by component and failure mode, compute RPN deterministically,
+              and display the result.
             </p>
           </div>
           <div className="text-xs text-slate-500">
@@ -94,7 +99,7 @@ export default function FmeaGeneratorPage() {
             <div>
               DB:{" "}
               <code className="text-sky-300">
-                fmea_library
+                fmea_dummy
               </code>
             </div>
           </div>
@@ -119,47 +124,75 @@ export default function FmeaGeneratorPage() {
             <form onSubmit={handleGenerate} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold mb-1 text-slate-300">
-                  Asset class
+                  Component
                 </label>
                 <select
                   className="border border-slate-700 bg-slate-950/60 rounded-lg px-3 py-2 w-full text-sm outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-                  value={assetClass}
+                  value={component}
                   onChange={(e) => {
-                    setAssetClass(e.target.value);
-                    setFailureFamily("");
+                    setComponent(e.target.value);
+                    setFailureMode("");
                   }}
                 >
-                  <option value="">Select asset class...</option>
-                  <option value="Pump">Pump</option>
-                  <option value="Conveyor">Conveyor</option>
-                  {/* Extend with more asset classes as you add to fmea_library */}
+                  <option value="">Select component...</option>
+                  <option value="Pump seal">Pump seal</option>
+                  <option value="Conveyor belt">Conveyor belt</option>
+                  <option value="Drive motor">Drive motor</option>
+                  <option value="Cooling fan">Cooling fan</option>
+                  <option value="Isolation valve">Isolation valve</option>
+                  <option value="Gearbox">Gearbox</option>
+                  <option value="Air compressor">Air compressor</option>
+                  <option value="Heat exchanger">Heat exchanger</option>
+                  <option value="Pump bearing">Pump bearing</option>
+                  <option value="Process filter">Process filter</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold mb-1 text-slate-300">
-                  Failure family
+                  Failure mode
                 </label>
                 <select
                   className="border border-slate-700 bg-slate-950/60 rounded-lg px-3 py-2 w-full text-sm outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-                  value={failureFamily}
-                  onChange={(e) => setFailureFamily(e.target.value)}
-                  disabled={!assetClass}
+                  value={failureMode}
+                  onChange={(e) => setFailureMode(e.target.value)}
+                  disabled={!component}
                 >
                   <option value="">
-                    {assetClass
-                      ? "Select failure family..."
-                      : "Select an asset class first"}
+                    {component
+                      ? "Select failure mode..."
+                      : "Select a component first"}
                   </option>
 
-                  {/* Very simple hard-coded mapping for Stage 1 */}
-                  {assetClass === "Pump" && (
+                  {component === "Pump seal" && (
                     <option value="Seal failure">Seal failure</option>
                   )}
-                  {assetClass === "Conveyor" && (
-                    <option value="Belt misalignment">
-                      Belt misalignment
-                    </option>
+                  {component === "Conveyor belt" && (
+                    <option value="Belt misalignment">Belt misalignment</option>
+                  )}
+                  {component === "Drive motor" && (
+                    <option value="Overheating">Overheating</option>
+                  )}
+                  {component === "Cooling fan" && (
+                    <option value="Blade imbalance">Blade imbalance</option>
+                  )}
+                  {component === "Isolation valve" && (
+                    <option value="Stuck open">Stuck open</option>
+                  )}
+                  {component === "Gearbox" && (
+                    <option value="Lubrication loss">Lubrication loss</option>
+                  )}
+                  {component === "Air compressor" && (
+                    <option value="High vibration">High vibration</option>
+                  )}
+                  {component === "Heat exchanger" && (
+                    <option value="Fouling">Fouling</option>
+                  )}
+                  {component === "Pump bearing" && (
+                    <option value="Spalling">Spalling</option>
+                  )}
+                  {component === "Process filter" && (
+                    <option value="Plugging">Plugging</option>
                   )}
                 </select>
               </div>
@@ -174,8 +207,12 @@ export default function FmeaGeneratorPage() {
 
               <p className="text-[11px] text-slate-500">
                 Stage 1 constraint: library-only, no AI. We simply look up a
-                template row from <code className="text-sky-300">fmea_library</code>{" "}
-                and compute <code className="text-sky-300">rpn_pre = sev_pre × occ_pre × det_pre</code>.
+                stored row in <code className="text-sky-300">fmea_dummy</code>{" "}
+                and compute{" "}
+                <code className="text-sky-300">
+                  rpn_pre = sev_pre × occ_pre × det_pre
+                </code>{" "}
+                if needed.
               </p>
             </form>
           </section>
@@ -207,7 +244,7 @@ export default function FmeaGeneratorPage() {
                         Scenario
                       </div>
                       <div className="text-sm font-semibold text-slate-100">
-                        {result.asset_class} &mdash; {result.failure_family}
+                        {result.component} &mdash; {result.failure_mode}
                       </div>
                     </div>
                     <div className="text-right">
@@ -218,8 +255,9 @@ export default function FmeaGeneratorPage() {
                         {result.rpn_pre}
                       </div>
                       <div className="text-[11px] text-slate-400">
-                        S: {result.sev_pre} &nbsp; O: {result.occ_pre} &nbsp; D:{" "}
-                        {result.det_pre}
+                        S: {result.sev_pre ?? "-"} &nbsp; O:{" "}
+                        {result.occ_pre ?? "-"} &nbsp; D:{" "}
+                        {result.det_pre ?? "-"}
                       </div>
                     </div>
                   </div>
@@ -229,56 +267,38 @@ export default function FmeaGeneratorPage() {
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
                     <h3 className="text-xs font-semibold text-slate-300 mb-1">
-                      Effect
+                      Effects
                     </h3>
                     <p className="text-sm text-slate-200">
-                      {result.effect}
+                      {result.effects}
                     </p>
                   </div>
 
                   <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
                     <h3 className="text-xs font-semibold text-slate-300 mb-1">
-                      Causes
+                      Cause
                     </h3>
-                    {result.causes && result.causes.length > 0 ? (
-                      <ul className="list-disc list-inside text-sm text-slate-200 space-y-1">
-                        {result.causes.map((c, i) => (
-                          <li key={i}>{c}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-slate-400">No causes in library.</p>
-                    )}
+                    <p className="text-sm text-slate-200">
+                      {result.cause || "—"}
+                    </p>
                   </div>
 
                   <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
                     <h3 className="text-xs font-semibold text-slate-300 mb-1">
-                      Detection
+                      Current design / controls
                     </h3>
-                    {result.detection && result.detection.length > 0 ? (
-                      <ul className="list-disc list-inside text-sm text-slate-200 space-y-1">
-                        {result.detection.map((d, i) => (
-                          <li key={i}>{d}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-slate-400">No detection methods in library.</p>
-                    )}
+                    <p className="text-sm text-slate-200">
+                      {result.current_design || "—"}
+                    </p>
                   </div>
 
                   <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
                     <h3 className="text-xs font-semibold text-slate-300 mb-1">
                       Recommended actions
                     </h3>
-                    {result.actions && result.actions.length > 0 ? (
-                      <ul className="list-disc list-inside text-sm text-slate-200 space-y-1">
-                        {result.actions.map((a, i) => (
-                          <li key={i}>{a}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-slate-400">No actions in library.</p>
-                    )}
+                    <p className="text-sm text-slate-200">
+                      {result.recommended_actions || "—"}
+                    </p>
                   </div>
                 </div>
               </div>
